@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drill Room</title>
+<style>
+:root{
+  --bg:#f5f4ef; --panel:#ffffff; --ink:#1d1f23; --muted:#5f636b; --line:#dad8d0;
+  --accent:#2c6e5c; --accent-ink:#ffffff; --accent-soft:#e2efe9;
+  --ok:#2b7a47; --bad:#b0383a; --focus:#c0392b; --given:#efeee8; --sel:#fff3c9;
+  --glow:#2fa486; --hue-l:36%; --shadow:0 1px 2px rgba(0,0,0,.05),0 6px 18px rgba(0,0,0,.05);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15171a; --panel:#1e2125; --ink:#e8e6e0; --muted:#a3a7ae; --line:#343840;
+    --accent:#5fb89d; --accent-ink:#0e1915; --accent-soft:#213229;
+    --ok:#5cc184; --bad:#ef7070; --focus:#ff6b5b; --given:#272a2f; --sel:#3b3523;
+    --glow:#72e3c3; --hue-l:68%; --shadow:none; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15171a; --panel:#1e2125; --ink:#e8e6e0; --muted:#a3a7ae; --line:#343840;
+  --accent:#5fb89d; --accent-ink:#0e1915; --accent-soft:#213229;
+  --ok:#5cc184; --bad:#ef7070; --focus:#ff6b5b; --given:#272a2f; --sel:#3b3523;
+  --glow:#72e3c3; --hue-l:68%; --shadow:none; color-scheme: dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 "Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+a{color:var(--accent)}
+[hidden]{display:none !important}
+
+/* header */
+.top{position:sticky;top:0;z-index:10;background:var(--panel);border-bottom:1px solid var(--line)}
+.top-in{max-width:1180px;margin:0 auto;padding:10px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.brand{font-weight:700;font-size:18px;line-height:1.15}
+.brand small{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;flex:1 1 auto}
+.tabs button{border:0;background:transparent;color:var(--muted);padding:8px 12px;border-radius:8px;cursor:pointer;font:inherit;font-weight:600}
+.tabs button:hover{color:var(--ink);background:var(--accent-soft)}
+.tabs button[aria-selected="true"]{color:var(--accent-ink);background:var(--accent)}
+.tools{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--ink);padding:5px 10px;cursor:pointer;font:inherit;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.icon-btn{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:8px;padding:5px 9px;cursor:pointer;font:inherit}
+
+main{max-width:1180px;margin:0 auto;padding:18px 16px 40px}
+.layout{display:grid;grid-template-columns:310px minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:860px){.layout{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+.card h2{font-size:16px;margin:0 0 4px}
+.card h3{font-size:13px;margin:14px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.sub{color:var(--muted);font-size:13px;margin:0 0 12px}
+
+/* form */
+.field{margin:0 0 12px}
+.field>label,.field>.lbl{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted);margin-bottom:4px}
+.field output{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0}
+select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px}
+textarea{min-height:120px;resize:vertical;margin-top:8px}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:14px;margin:6px 0;cursor:pointer}
+.check input{margin-top:3px;accent-color:var(--accent)}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:0 0 6px}
+.mode-btn{text-align:left;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:8px;padding:7px 9px;cursor:pointer;font:inherit;font-size:13px;line-height:1.25}
+.mode-btn small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.mode-btn:hover{border-color:var(--accent)}
+.mode-btn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+
+.btn{border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:8px 14px;cursor:pointer;font:inherit;font-weight:600}
+.btn:hover{filter:brightness(1.07)}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:default;filter:none}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.clock{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:700;font-size:18px}
+.hint{font-size:13px;color:var(--muted);margin:0 0 12px;min-height:1.5em}
+.msg{font-weight:600;min-height:1.5em;margin:8px 0}
+.msg.ok{color:var(--ok)} .msg.bad{color:var(--bad)}
+
+/* reading stage */
+.stage{position:relative;min-height:300px;border:1px dashed var(--line);border-radius:10px;padding:18px 20px;overflow:hidden}
+.stage .placeholder{color:var(--muted);text-align:center;padding:90px 10px}
+.rd-text{white-space:pre-wrap;line-height:1.6;overflow-wrap:break-word}
+.rd-text.breakall{word-break:break-all}
+.tilt-holder{position:relative}
+.tilt-inner{position:absolute;transform-origin:50% 50%;white-space:pre-wrap;line-height:1.6}
+.tw{display:inline-block;white-space:pre}
+.rw{display:inline-block;white-space:nowrap}
+.rc{display:inline-block;transform-origin:50% 55%}
+.paused .rc{animation-play-state:paused !important}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes flick{0%,100%{opacity:1}50%{opacity:.12}}
+canvas.torn{display:block;max-width:100%}
+.original{margin-top:14px;padding:12px 14px;background:var(--given);border-radius:10px;white-space:pre-wrap;line-height:1.55}
+table.res{border-collapse:collapse;width:100%;font-size:14px;margin:6px 0 10px}
+table.res th,table.res td{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertical-align:top}
+table.res th{color:var(--muted);font-weight:500;width:52%}
+table.log{border-collapse:collapse;width:100%;font-size:13px}
+table.log th,table.log td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left}
+table.log th{color:var(--muted);font-weight:500}
+.mt{margin-top:16px}
+
+/* running line */
+.rl-stage{position:relative;height:200px;border:1px dashed var(--line);border-radius:10px;overflow:hidden;display:flex;align-items:center}
+.rl-word{display:grid;grid-template-columns:1fr auto 1fr;width:100%;white-space:pre;line-height:1.2}
+.rl-word.centered{display:block;text-align:center}
+.rl-left{text-align:right}
+.rl-mid.mark{color:var(--focus)}
+.rl-guide{position:absolute;left:50%;width:2px;height:22px;background:var(--focus);opacity:.55;transform:translateX(-1px)}
+.rl-guide.t{top:18px}.rl-guide.b{bottom:18px}
+.ticker{position:absolute;left:0;top:50%;white-space:nowrap;will-change:transform;line-height:1.2}
+.progress{height:6px;background:var(--given);border-radius:3px;overflow:hidden;margin-top:10px}
+.progress>div{height:100%;width:0;background:var(--accent)}
+.rl-placeholder{width:100%;text-align:center;color:var(--muted)}
+
+/* magic square */
+.ms-wrap{display:flex;flex-direction:column;align-items:center}
+.ms-board{display:grid;gap:6px;justify-content:center;margin:6px auto}
+.cell{width:var(--cell);height:var(--cell);border-radius:8px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:var(--cfs);font-weight:600;font-variant-numeric:tabular-nums}
+.cell.given{background:var(--given)}
+input.cell{background:var(--panel);color:var(--accent);text-align:center;font:inherit;font-size:var(--cfs);font-weight:700;padding:0;border:2px solid var(--accent);outline:none}
+input.cell:focus{background:var(--sel)}
+input.cell.revealed{color:var(--muted);border-style:dashed}
+input.cell:disabled{opacity:1}
+.sum{width:var(--sumw);height:var(--cell);display:flex;align-items:center;justify-content:flex-start;padding-left:4px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.sum.col{width:var(--cell);height:26px;justify-content:center;padding:0}
+.sum.ok{color:var(--ok);font-weight:700} .sum.bad{color:var(--bad);font-weight:700}
+.ms-meta{display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:center;font-size:14px;margin:4px 0}
+.ms-meta b{font-variant-numeric:tabular-nums}
+.keypad{display:grid;grid-template-columns:repeat(6,46px);gap:6px;justify-content:center;margin:10px auto}
+.keypad button{height:40px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:inherit;font-weight:700;cursor:pointer}
+.keypad button:hover{border-color:var(--accent)}
+@media (max-width:420px){.keypad{grid-template-columns:repeat(6,1fr);width:100%}.ms-board{gap:4px}}
+@media (max-width:640px){.top{position:static}.stage{padding:14px 12px}.sum{font-size:11px}}
+
+/* about */
+.prose{max-width:780px}
+.prose h2{font-size:18px;margin:18px 0 6px}
+.prose p,.prose li{line-height:1.6}
+.prose table{border-collapse:collapse;width:100%;font-size:14px}
+.prose td,.prose th{border-bottom:1px solid var(--line);padding:6px;text-align:left;vertical-align:top}
+.prose th{color:var(--muted);font-weight:500}
+footer{max-width:1180px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font-size:12px}
+kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px;font-size:12px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand">Drill Room<small>Reading &amp; logic trainers · works offline</small></div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="reading" aria-selected="true">Distorted text</button>
+      <button role="tab" data-tab="running" aria-selected="false">Running line</button>
+      <button role="tab" data-tab="magic" aria-selected="false">Magic square</button>
+      <button role="tab" data-tab="about" aria-selected="false">About</button>
+    </nav>
+    <div class="tools">
+      <span>Texts</span>
+      <span class="seg"><button data-lang="ru" aria-pressed="true">RU</button><button data-lang="en" aria-pressed="false">EN</button></span>
+      <button class="icon-btn" id="theme-btn" title="Switch light/dark theme">Theme</button>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- ================= DISTORTED TEXT ================= -->
+<section id="tab-reading">
+  <div class="layout">
+    <div class="card">
+      <h2>Settings</h2>
+      <p class="sub">Choose an exercise, a text and its difficulty, then press <b>Start</b>. Press <b>Done reading</b> when you reach the end.</p>
+      <div class="modes" id="rd-modes"></div>
+
+      <h3>Text</h3>
+      <div class="field">
+        <select id="rd-src" aria-label="Text"></select>
+        <textarea id="rd-own" placeholder="Paste any text here. Blank lines separate paragraphs." hidden></textarea>
+      </div>
+
+      <h3>Exercise options</h3>
+      <div data-for="missing">
+        <div class="field"><label for="rd-miss-p">Letters hidden <output for="rd-miss-p"></output></label>
+          <input type="range" id="rd-miss-p" min="5" max="70" step="5" value="25" data-unit="%"></div>
+        <div class="field"><label for="rd-miss-gap">Show a gap as</label>
+          <select id="rd-miss-gap"><option value="_">underscore  _</option><option value="·">dot  ·</option><option value="">nothing (letter removed)</option></select></div>
+      </div>
+      <div data-for="vowels" hidden>
+        <div class="field"><label for="rd-vow-gap">Show a missing vowel as</label>
+          <select id="rd-vow-gap"><option value="_">underscore  _</option><option value="·">dot  ·</option><option value="">nothing (vowel removed)</option></select></div>
+      </div>
+      <div data-for="nospace" hidden>
+        <label class="check"><input type="checkbox" id="rd-ns-punct"> Also remove punctuation</label>
+        <label class="check"><input type="checkbox" id="rd-ns-lower"> Lower-case everything</label>
+      </div>
+      <div data-for="scramble" hidden>
+        <div class="field"><label for="rd-scr-p">Swap probability <output for="rd-scr-p"></output></label>
+          <input type="range" id="rd-scr-p" min="10" max="100" step="5" value="40" data-unit="%"></div>
+        <label class="check"><input type="checkbox" id="rd-scr-ends" checked> Keep first and last letter of each word</label>
+      </div>
+      <div data-for="tilt" hidden>
+        <div class="field"><label for="rd-tilt-a">Rotation <output for="rd-tilt-a"></output></label>
+          <input type="range" id="rd-tilt-a" min="0" max="360" step="5" value="180" data-unit="°"></div>
+        <div class="field"><label for="rd-tilt-unit">Rotate</label>
+          <select id="rd-tilt-unit"><option value="whole">the whole text</option><option value="word">each word</option><option value="letter">each letter</option></select></div>
+        <div class="field"><label for="rd-tilt-sp">Letter spacing <output for="rd-tilt-sp"></output></label>
+          <input type="range" id="rd-tilt-sp" min="0" max="16" step="1" value="1" data-unit=" px"></div>
+        <label class="check"><input type="checkbox" id="rd-tilt-mirror"> Mirror image</label>
+      </div>
+      <div data-for="torn" hidden>
+        <div class="field"><label for="rd-torn-n">Tears per line <output for="rd-torn-n"></output></label>
+          <input type="range" id="rd-torn-n" min="1" max="4" step="1" value="1"></div>
+        <div class="field"><label for="rd-torn-gap">Gap between pieces <output for="rd-torn-gap"></output></label>
+          <input type="range" id="rd-torn-gap" min="0" max="20" step="1" value="7" data-unit=" px"></div>
+        <div class="field"><label for="rd-torn-jit">Sideways shift <output for="rd-torn-jit"></output></label>
+          <input type="range" id="rd-torn-jit" min="0" max="12" step="1" value="3" data-unit=" px"></div>
+        <label class="check"><input type="checkbox" id="rd-torn-glow"> Glowing letters</label>
+      </div>
+      <div data-for="rotate" hidden>
+        <div class="field"><label for="rd-rot-v">Rotation speed <output for="rd-rot-v"></output></label>
+          <input type="range" id="rd-rot-v" min="10" max="360" step="10" value="60" data-unit=" °/s"></div>
+        <div class="field"><label for="rd-rot-sp">Letter spacing <output for="rd-rot-sp"></output></label>
+          <input type="range" id="rd-rot-sp" min="0" max="16" step="1" value="3" data-unit=" px"></div>
+        <label class="check"><input type="checkbox" id="rd-rot-dir" checked> Random direction</label>
+        <label class="check"><input type="checkbox" id="rd-rot-col"> Coloured letters</label>
+        <label class="check"><input type="checkbox" id="rd-rot-flick"> Flickering letters</label>
+      </div>
+      <div class="field"><label for="rd-size">Font size <output for="rd-size"></output></label>
+        <input type="range" id="rd-size" min="14" max="40" step="1" value="22" data-unit=" px"></div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="toolbar">
+          <button class="btn" id="rd-start">Start</button>
+          <button class="btn" id="rd-done" disabled>Done reading</button>
+          <button class="btn ghost" id="rd-orig" disabled>Show original</button>
+          <button class="btn ghost" id="rd-stop" disabled>Stop</button>
+          <span class="clock" id="rd-clock">00:00:00</span>
+        </div>
+        <p class="hint" id="rd-hint"></p>
+        <div class="stage" id="rd-stage"><div class="placeholder">Your text will appear here.</div></div>
+        <div class="original" id="rd-original" hidden></div>
+      </div>
+      <div class="card mt" id="rd-result" hidden>
+        <h2>Your result</h2>
+        <div id="rd-result-body"></div>
+        <div class="toolbar"><button class="btn" id="rd-again">Next text</button></div>
+      </div>
+      <div class="card mt" id="rd-log-card" hidden>
+        <h2>This session</h2>
+        <table class="log"><thead><tr><th>#</th><th>Exercise</th><th>Text</th><th>Time</th><th>Speed</th></tr></thead><tbody id="rd-log"></tbody></table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= RUNNING LINE ================= -->
+<section id="tab-running" hidden>
+  <div class="layout">
+    <div class="card">
+      <h2>Settings</h2>
+      <p class="sub">The text is shown a few words at a time at the speed you set. Keep your eyes on the red marks. <kbd>Space</kbd> pauses.</p>
+      <h3>Text</h3>
+      <div class="field">
+        <select id="rl-src" aria-label="Text"></select>
+        <textarea id="rl-own" placeholder="Paste any text here." hidden></textarea>
+      </div>
+      <h3>Display</h3>
+      <div class="field"><label for="rl-mode">Mode</label>
+        <select id="rl-mode"><option value="flash">Flash: chunks in one place</option><option value="ticker">Ticker: line scrolls right to left</option></select></div>
+      <div class="field"><label for="rl-wpm">Speed <output for="rl-wpm"></output></label>
+        <input type="range" id="rl-wpm" min="60" max="1200" step="20" value="300" data-unit=" wpm"></div>
+      <div data-rl="flash">
+        <div class="field"><label for="rl-n">Words per chunk <output for="rl-n"></output></label>
+          <input type="range" id="rl-n" min="1" max="6" step="1" value="2"></div>
+        <div class="field"><label for="rl-bal">Length-based timing <output for="rl-bal"></output></label>
+          <input type="range" id="rl-bal" min="0" max="100" step="10" value="50" data-unit="%"></div>
+        <label class="check"><input type="checkbox" id="rl-punct" checked> Pause longer after punctuation</label>
+        <label class="check"><input type="checkbox" id="rl-focus" checked> Focus letter (red, fixed position)</label>
+        <div class="field"><label for="rl-fpos">Focus letter position in chunk <output for="rl-fpos"></output></label>
+          <input type="range" id="rl-fpos" min="0" max="100" step="5" value="35" data-unit="%"></div>
+      </div>
+      <div class="field"><label for="rl-size">Font size <output for="rl-size"></output></label>
+        <input type="range" id="rl-size" min="16" max="72" step="2" value="40" data-unit=" px"></div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="toolbar">
+          <button class="btn" id="rl-start">Start</button>
+          <button class="btn ghost" id="rl-pause" disabled>Pause</button>
+          <button class="btn ghost" id="rl-stop" disabled>Stop</button>
+          <span class="clock" id="rl-clock">00:00:00</span>
+        </div>
+        <div class="rl-stage" id="rl-stage"><div class="rl-placeholder">Press Start.</div></div>
+        <div class="progress"><div id="rl-prog"></div></div>
+      </div>
+      <div class="card mt" id="rl-result" hidden>
+        <h2>Your result</h2>
+        <div id="rl-result-body"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= MAGIC SQUARE ================= -->
+<section id="tab-magic" hidden>
+  <div class="layout">
+    <div class="card">
+      <h2>Settings</h2>
+      <p class="sub">Fill the empty cells so that every row, every column and both diagonals have the same sum.</p>
+      <div class="field"><label for="ms-n">Square size <output for="ms-n"></output></label>
+        <input type="range" id="ms-n" min="3" max="6" step="1" value="3"></div>
+      <div class="field"><label for="ms-dig">Numbers</label>
+        <select id="ms-dig"><option value="0">classic: 1 … n²</option><option value="2">two-digit</option><option value="3">three-digit</option></select></div>
+      <label class="check"><input type="checkbox" id="ms-mixed" disabled> Mixed digit count (e.g. 7 next to 64)</label>
+      <label class="check"><input type="checkbox" id="ms-semi"> Semi-magic square (diagonals not checked)</label>
+      <div class="field mt"><label for="ms-diff">Empty cells</label>
+        <select id="ms-diff"><option value="easy">few — solve line by line</option><option value="medium" selected>many — solve line by line</option><option value="hard">maximum — may need simple equations</option></select></div>
+      <label class="check"><input type="checkbox" id="ms-showS" checked> Show the magic sum</label>
+      <label class="check"><input type="checkbox" id="ms-showLines" checked> Show line sums as I type</label>
+      <div class="field mt"><label for="ms-req">Squares to solve <output for="ms-req"></output></label>
+        <input type="range" id="ms-req" min="1" max="20" step="1" value="5"></div>
+      <button class="btn" id="ms-start">Start</button>
+    </div>
+    <div>
+      <div class="card">
+        <div class="toolbar">
+          <span id="ms-progress">Solved: 0 / 5</span>
+          <span class="clock" id="ms-clock">00:00:00</span>
+        </div>
+        <div id="ms-area">
+          <div class="placeholder" style="color:var(--muted);text-align:center;padding:80px 10px">Choose the settings and press Start.</div>
+        </div>
+      </div>
+      <div class="card mt" id="ms-result" hidden>
+        <h2>Your result</h2>
+        <div id="ms-result-body"></div>
+        <div class="toolbar"><button class="btn" id="ms-again">Train again</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ABOUT ================= -->
+<section id="tab-about" hidden>
+  <div class="card prose">
+    <h2 style="margin-top:0">What this is</h2>
+    <p>An offline, single-file re-implementation of several free online trainers published at <a href="https://vomikod.com" target="_blank" rel="noopener">vomikod.com</a>. No code, images or texts from that site are used: the site documents only the names and settings of its trainers, so the mechanics here are my interpretation of those settings. Built-in texts are original and come in parallel Russian and English versions.</p>
+    <table>
+      <tr><th>Here</th><th>Original trainer</th><th>Original settings</th></tr>
+      <tr><td>Missing letters</td><td>Пропущенные буквы в словах</td><td>probability of omission, font size</td></tr>
+      <tr><td>Missing vowels</td><td>Пропущенные гласные</td><td>font size</td></tr>
+      <tr><td>No spaces</td><td>Чтение без пробелов</td><td>font size</td></tr>
+      <tr><td>Scrambled letters</td><td>Переставленные символы</td><td>probability of transposition, font size</td></tr>
+      <tr><td>Tilted text</td><td>Перевернутый текст</td><td>tilt in degrees, letter spacing, font size</td></tr>
+      <tr><td>Torn text</td><td>Разорванный текст</td><td>number of tears, gap between pieces, letter glow, font size</td></tr>
+      <tr><td>Rotating letters</td><td>Вращающиеся символы</td><td>rotation speed (°/s), letter spacing, coloured and flickering letters</td></tr>
+      <tr><td>Running line</td><td>Бегущая строка</td><td>WPM, words per line, exposure-time smoothing, focus 1 and 2, font size</td></tr>
+      <tr><td>Magic square</td><td>Магический квадрат</td><td>size, digit count, mixed digits, semi-magic, required squares</td></tr>
+    </table>
+    <h2>How to read the numbers</h2>
+    <p>Reading speed is words in the text divided by your reading time. A large review puts typical silent reading of English non-fiction at about 238 words per minute (Brysbaert, 2019). Treat these drills as attention and decoding practice: research reviews find that pushing reading speed far above the normal rate costs comprehension, and that the bottleneck is language processing, not eye movement (Rayner et al., 2016).</p>
+    <h2>Keyboard</h2>
+    <ul>
+      <li>Running line: <kbd>Space</kbd> pauses and resumes.</li>
+      <li>Magic square: type digits into the highlighted cells, <kbd>Tab</kbd> moves to the next cell, <kbd>Enter</kbd> checks the square.</li>
+    </ul>
+    <h2>Sources</h2>
+    <ul>
+      <li>VOMIKOD trainers: <a href="https://vomikod.com/about/speedreading" target="_blank" rel="noopener">speed reading</a>, <a href="https://vomikod.com/about/magicSquares" target="_blank" rel="noopener">magic square</a>.</li>
+      <li>Rayner, K., Schotter, E. R., Masson, M. E. J., Potter, M. C., &amp; Treiman, R. (2016). So much to read, so little time: How do we read, and can speed reading help? <i>Psychological Science in the Public Interest, 17</i>(1), 4–34.</li>
+      <li>Brysbaert, M. (2019). How many words do we read per minute? A review and meta-analysis of reading rate. <i>Journal of Memory and Language, 109</i>, 104047.</li>
+    </ul>
+  </div>
+</section>
+</main>
+<footer>Drill Room · exercise ideas modelled on the free trainers at vomikod.com · independent offline version.</footer>
+
+<script>
+(function(){
+'use strict';
+
+/* =========================================================
+   Texts (original, parallel RU / EN)
+   ========================================================= */
+var TEXTS = {
+en: [
+{title:'The turtle and the square', body:
+'An old Chinese legend tells of a great flood on the Luo River. As people made offerings to calm the river, a turtle crawled out of the water. On its shell was a curious pattern of dots: the numbers from one to nine, arranged in a three-by-three grid. Whichever way you added them, along any row, any column or either diagonal, the total was always fifteen.\n\nThe pattern became known as the Lo Shu square, and it is often called the oldest magic square in the world. The number five sits in the centre, the even numbers occupy the corners, and the odd numbers lie in between. Every other three-by-three magic square made from the numbers one to nine is simply a rotation or reflection of this one. Later mathematicians found magic squares of every size except two by two, and teachers still use them to train logic, patience and a feeling for numbers.'},
+{title:'Why transformers hum', body:
+'Stand near a large power transformer and you will hear a steady, low hum. The sound does not come from electricity leaking into the air. It comes from the steel core itself. The core is built from thin sheets of electrical steel, and every time the magnetic field in it changes, the steel very slightly changes its length. This effect is called magnetostriction.\n\nThe change is tiny, only a few millionths of the original size, but it repeats with every half-cycle of the alternating current. In a fifty-hertz grid the field reaches its peak a hundred times per second, so the main tone of the hum is a hundred hertz, with higher harmonics on top. Loose clamps, cooling fans and oil pumps add their own noise. Engineers reduce the hum with better grades of steel, careful stacking of the sheets and anti-vibration mounts, and they measure it to make sure that a substation does not disturb its neighbours.'},
+{title:'How long is a metre?', body:
+'In the 1790s, French scientists set out to create a unit of length that would belong to everyone. They defined the metre as one ten-millionth of the distance from the North Pole to the equator, measured along the meridian through Paris. Two astronomers spent years surveying the arc between Dunkirk and Barcelona to find that distance. Their result was later found to be slightly off, but the new unit was adopted anyway, and a platinum bar was made to represent it.\n\nIn 1889 a more stable bar of platinum and iridium became the international prototype. Bars, however, can be damaged or lost, and measurements must agree all over the world. Since 1983 the metre has been defined through the speed of light: it is the distance that light travels in a vacuum in 1/299,792,458 of a second. Anyone with the right equipment can now reproduce the metre without travelling to Paris.'},
+{title:'False friends', body:
+'Every translator who works between Russian and English soon meets false friends: pairs of words that look or sound alike but mean different things. An accurate report is not an "аккуратный отчёт": accurate means precise, while аккуратный usually means neat or careful. A magazine is a журнал, not a магазин, which is a shop. Fabric is cloth, but фабрика is a factory. A decade lasts ten years, whereas the Russian декада most often means a period of ten days.\n\nTechnical texts are not safe either. In English an instrument is often a measuring device, while the Russian инструмент is usually a tool. The best defence is suspicion: whenever a word in your translation looks too convenient, check it in a good dictionary and read the sentence once more in context. Sometimes the obvious choice is right, but it should always be a choice, not a reflex.'},
+{title:'How the eyes read', body:
+'When we read, our eyes do not glide smoothly along the line. They jump. Each jump, called a saccade, lasts only a few hundredths of a second, and during it we take in almost no new information. Between jumps the eyes stop for a fixation, which usually lasts about a quarter of a second. In that brief pause we identify the word we are looking at and catch a glimpse of the next one.\n\nSkilled readers skip many short, predictable words such as articles, and they often jump back to check a phrase they did not fully understand. Research suggests that the main limit on reading speed is not how fast the eyes move but how fast the mind can recognise words and build meaning from them. That is why reading faster usually means understanding less, unless the text is easy or already familiar. Regular reading of varied and challenging texts, however, builds vocabulary, and a larger vocabulary makes every page quicker to read.'}
+],
+ru: [
+{title:'Черепаха и квадрат', body:
+'Старинная китайская легенда рассказывает о великом наводнении на реке Ло. Когда люди приносили жертвы, чтобы усмирить реку, из воды выползла черепаха. На её панцире был странный узор из точек: числа от одного до девяти, расположенные в квадрате три на три. Как ни складывай — по любой строке, любому столбцу или любой из диагоналей, — сумма всегда равнялась пятнадцати.\n\nЭтот узор назвали квадратом Ло Шу, и его часто называют древнейшим магическим квадратом в мире. В центре стоит пятёрка, в углах — чётные числа, а между ними — нечётные. Любой другой магический квадрат три на три из чисел от одного до девяти — лишь поворот или отражение этого квадрата. Позднее математики нашли магические квадраты всех размеров, кроме два на два, и учителя до сих пор используют их, чтобы развивать логику, терпение и чувство числа.'},
+{title:'Почему гудит трансформатор', body:
+'Подойдите к большому силовому трансформатору, и вы услышите ровный низкий гул. Этот звук издаёт не электричество, «утекающее» в воздух, а сам стальной сердечник. Сердечник набирают из тонких листов электротехнической стали, и всякий раз, когда магнитное поле в нём меняется, сталь чуть-чуть меняет свои размеры. Это явление называется магнитострикцией.\n\nИзменение крошечное — всего несколько миллионных долей исходного размера, — но оно повторяется каждые полпериода переменного тока. В сети частотой пятьдесят герц поле достигает пика сто раз в секунду, поэтому основной тон гула — сто герц, а поверх него звучат высшие гармоники. Свой вклад в шум вносят ослабленные стяжки, вентиляторы охлаждения и масляные насосы. Инженеры снижают гул, применяя более качественные марки стали, тщательно собирая пакеты листов и устанавливая виброизолирующие опоры, а также измеряют его, чтобы подстанция не мешала соседям.'},
+{title:'Какой длины метр?', body:
+'В 1790-х годах французские учёные решили создать единицу длины, которая принадлежала бы всем. Они определили метр как одну десятимиллионную часть расстояния от Северного полюса до экватора, измеренного по парижскому меридиану. Двое астрономов несколько лет измеряли дугу между Дюнкерком и Барселоной, чтобы найти это расстояние. Позднее выяснилось, что их результат был немного неточен, но новую единицу всё равно приняли и изготовили платиновый эталон.\n\nВ 1889 году международным прототипом стал более стабильный брусок из сплава платины и иридия. Однако эталоны могут повредиться или потеряться, а измерения должны совпадать во всём мире. С 1983 года метр определяется через скорость света: это расстояние, которое свет проходит в вакууме за 1/299 792 458 секунды. Теперь любой, у кого есть подходящее оборудование, может воспроизвести метр, не выезжая в Париж.'},
+{title:'Ложные друзья переводчика', body:
+'Каждый, кто переводит с русского на английский и обратно, рано или поздно встречает «ложных друзей переводчика» — пары слов, похожих по звучанию или написанию, но разных по значению. Accurate report — это не «аккуратный отчёт»: accurate значит «точный», а «аккуратный» чаще всего значит «опрятный» или «старательный». Magazine — это журнал, а не магазин, то есть shop. Fabric — это ткань, а фабрика — factory. Decade длится десять лет, тогда как русская «декада» чаще всего означает период в десять дней.\n\nТехнические тексты тоже не застрахованы. Английское instrument нередко означает измерительный прибор, а русский «инструмент» — обычно tool. Лучшая защита — подозрительность: если слово в переводе выглядит слишком удобным, проверьте его по хорошему словарю и перечитайте предложение в контексте. Иногда очевидный вариант верен, но это всегда должен быть выбор, а не рефлекс.'},
+{title:'Как читают глаза', body:
+'Когда мы читаем, глаза не скользят плавно по строке, а совершают скачки. Каждый такой скачок — саккада — длится лишь несколько сотых долей секунды, и в это время мы почти не получаем новой информации. Между скачками глаза останавливаются — это фиксация, которая обычно длится около четверти секунды. За эту короткую паузу мы узнаём слово, на которое смотрим, и успеваем мельком увидеть следующее.\n\nОпытные читатели пропускают многие короткие предсказуемые слова, например предлоги и союзы, и нередко возвращаются назад, чтобы перепроверить непонятную фразу. Исследования показывают, что скорость чтения ограничивает не быстрота движения глаз, а то, насколько быстро мозг распознаёт слова и выстраивает из них смысл. Поэтому более быстрое чтение обычно означает худшее понимание, если только текст не лёгкий или не знаком заранее. Зато регулярное чтение разнообразных и непростых текстов расширяет словарный запас, а с ним любая страница читается быстрее.'}
+]
+};
+
+/* =========================================================
+   Utilities
+   ========================================================= */
+var LETTER = /[A-Za-zÀ-ɏЀ-ӿ]/;
+var WORDCHARS = /[A-Za-zÀ-ɏЀ-ӿ]+/g;
+var VOWELS = 'аеёиоуыэюяАЕЁИОУЫЭЮЯaeiouAEIOU';
+var FONT = '"Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+
+function $(s, r){ return (r || document).querySelector(s); }
+function $$(s, r){ return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+function h(tag, props, kids){
+  var e = document.createElement(tag), k;
+  if (props) for (k in props) {
+    if (k === 'class') e.className = props[k];
+    else if (k === 'text') e.textContent = props[k];
+    else if (k === 'style') e.style.cssText = props[k];
+    else if (k.slice(0, 2) === 'on') e.addEventListener(k.slice(2), props[k]);
+    else e.setAttribute(k, props[k]);
+  }
+  if (kids) kids.forEach(function(c){ if (c != null) e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+  return e;
+}
+function rand(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+function range(n){ var a = []; for (var i = 0; i < n; i++) a.push(i); return a; }
+function shuffle(a){ for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+function pad2(n){ return (n < 10 ? '0' : '') + n; }
+function fmtTime(ms){ var s = Math.floor(ms / 1000); return pad2(Math.floor(s / 3600)) + ':' + pad2(Math.floor(s / 60) % 60) + ':' + pad2(s % 60); }
+function countWords(t){ return t.split(/\s+/).filter(function(w){ return /[0-9A-Za-zÀ-ɏЀ-ӿ]/.test(w); }).length; }
+function countChars(t){ return t.replace(/\n/g, '').length; }
+function cssVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function num(id){ return Number(document.getElementById(id).value); }
+function on(id){ return document.getElementById(id).checked; }
+function normalizeText(t){
+  return t.replace(/\r/g, '').split(/\n\s*\n/).map(function(p){ return p.replace(/\s+/g, ' ').trim(); })
+          .filter(Boolean).join('\n\n');
+}
+function resultsTable(rows){
+  var t = h('table', {class: 'res'});
+  rows.forEach(function(r){ t.appendChild(h('tr', null, [h('th', {text: r[0]}), h('td', {text: String(r[1])})])); });
+  return t;
+}
+function bindRanges(){
+  $$('input[type=range]').forEach(function(inp){
+    var out = $('output[for="' + inp.id + '"]');
+    function upd(){ if (out) out.textContent = inp.value + (inp.getAttribute('data-unit') || ''); }
+    inp.addEventListener('input', upd); upd();
+  });
+}
+
+function Timer(el){ this.el = el; this.acc = 0; this.t0 = 0; this.on = false; this.iv = null; }
+Timer.prototype.start = function(){ this.stop(); this.acc = 0; this.resume(); };
+Timer.prototype.resume = function(){
+  if (this.on) return; var self = this;
+  this.on = true; this.t0 = performance.now();
+  this.iv = setInterval(function(){ self.render(); }, 250); this.render();
+};
+Timer.prototype.pause = function(){
+  if (!this.on) return;
+  this.acc += performance.now() - this.t0; this.on = false; clearInterval(this.iv); this.render();
+};
+Timer.prototype.stop = function(){ this.pause(); };
+Timer.prototype.reset = function(){ this.pause(); this.acc = 0; this.render(); };
+Timer.prototype.elapsed = function(){ return this.acc + (this.on ? performance.now() - this.t0 : 0); };
+Timer.prototype.render = function(){ if (this.el) this.el.textContent = fmtTime(this.elapsed()); };
+
+/* ---------- text picker (shared) ---------- */
+var lang = 'ru';
+function TextPicker(prefix){
+  this.sel = document.getElementById(prefix + '-src');
+  this.ta = document.getElementById(prefix + '-own');
+  this.last = -1;
+  var self = this;
+  this.sel.addEventListener('change', function(){ self.ta.hidden = self.sel.value !== 'own'; });
+  this.refresh();
+}
+TextPicker.prototype.refresh = function(){
+  var prev = this.sel.value || 'random', s = this.sel;
+  s.innerHTML = '';
+  s.appendChild(h('option', {value: 'random', text: 'Random text (' + lang.toUpperCase() + ')'}));
+  TEXTS[lang].forEach(function(t, i){ s.appendChild(h('option', {value: String(i), text: t.title})); });
+  s.appendChild(h('option', {value: 'own', text: 'My own text…'}));
+  s.value = (prev === 'own' || prev === 'random') ? prev : 'random';
+  this.ta.hidden = s.value !== 'own';
+};
+TextPicker.prototype.get = function(){
+  var v = this.sel.value, list = TEXTS[lang], i;
+  if (v === 'own') {
+    var t = normalizeText(this.ta.value);
+    return t ? {title: 'Own text', body: t} : null;
+  }
+  if (v === 'random') {
+    do { i = rand(0, list.length - 1); } while (list.length > 1 && i === this.last);
+  } else i = Number(v);
+  this.last = i;
+  return list[i];
+};
+var pickers = [];
+
+/* =========================================================
+   1. DISTORTED TEXT
+   ========================================================= */
+var MODES = [
+  {id: 'missing',  en: 'Missing letters',   ru: 'Пропущенные буквы', hint: 'Random letters are hidden. Restore the words in your head as you read.'},
+  {id: 'vowels',   en: 'Missing vowels',    ru: 'Пропущенные гласные', hint: 'All vowels are hidden. Consonants carry most of the meaning: let them guide you.'},
+  {id: 'nospace',  en: 'No spaces',         ru: 'Чтение без пробелов', hint: 'All spaces are removed. Find the word boundaries as you read.'},
+  {id: 'scramble', en: 'Scrambled letters', ru: 'Переставленные символы', hint: 'Neighbouring letters inside words are swapped. Read for meaning, not for spelling.'},
+  {id: 'tilt',     en: 'Tilted text',       ru: 'Перевернутый текст', hint: 'The text is rotated (180° is upside down). Read it without turning your head or the screen.'},
+  {id: 'torn',     en: 'Torn text',         ru: 'Разорванный текст', hint: 'Each line is torn into horizontal strips and pulled apart. Put the letters back together mentally.'},
+  {id: 'rotate',   en: 'Rotating letters',  ru: 'Вращающиеся символы', hint: 'Every letter spins. Catch each one at the right moment and keep the sentence in memory.'}
+];
+function modeInfo(id){ for (var i = 0; i < MODES.length; i++) if (MODES[i].id === id) return MODES[i]; return MODES[0]; }
+
+var RD = {mode: 'missing', running: false, cur: null, timer: null, log: [], redraw: null};
+
+function replaceChars(text, test, gap){
+  var out = '', n = 0;
+  for (var i = 0; i < text.length; i++) {
+    var ch = text.charAt(i);
+    if (test(ch)) { out += gap; n++; } else out += ch;
+  }
+  return {text: out, n: n};
+}
+function scramble(text, p, keepEnds){
+  var swaps = 0;
+  var out = text.replace(WORDCHARS, function(w){
+    var a = w.split(''), first = keepEnds ? 1 : 0, last = keepEnds ? a.length - 2 : a.length - 1;
+    for (var i = first; i < last; i++) {
+      if (a[i] !== a[i + 1] && Math.random() < p) {
+        var t = a[i]; a[i] = a[i + 1]; a[i + 1] = t; swaps++; i++;
+      }
+    }
+    return a.join('');
+  });
+  return {text: out, n: swaps};
+}
+
+function renderPlain(stage, text, size, extraClass){
+  var d = h('div', {class: 'rd-text' + (extraClass ? ' ' + extraClass : ''), style: 'font-size:' + size + 'px'});
+  d.textContent = text;
+  stage.appendChild(d);
+}
+
+/* tokens of a paragraph with whitespace preserved */
+function eachParagraph(text, fn){
+  text.split('\n\n').forEach(function(p, i){ fn(p, i); });
+}
+
+function renderTilt(stage, text, o){
+  var angle = o.angle, unit = o.unit, sp = o.spacing, mir = o.mirror ? ' scaleX(-1)' : '';
+  if (unit === 'whole') {
+    var holder = h('div', {class: 'tilt-holder'});
+    var inner = h('div', {class: 'tilt-inner', style: 'font-size:' + o.size + 'px;letter-spacing:' + sp + 'px'});
+    inner.textContent = text;
+    holder.appendChild(inner); stage.appendChild(holder);
+    var layout = function(){
+      var W = stage.clientWidth - 40;
+      inner.style.transform = 'none';
+      inner.style.width = Math.max(200, W) + 'px';
+      var w = inner.offsetWidth, ht = inner.offsetHeight, r = angle * Math.PI / 180;
+      var c = Math.abs(Math.cos(r)), s = Math.abs(Math.sin(r));
+      var bw = w * c + ht * s, bh = w * s + ht * c;
+      var k = Math.min(1, W / bw);
+      var H = bh * k + 10;
+      holder.style.height = H + 'px';
+      inner.style.left = (W - w) / 2 + 'px';
+      inner.style.top = (H - ht) / 2 + 'px';
+      inner.style.transform = 'rotate(' + angle + 'deg) scale(' + k + ')' + mir;
+    };
+    layout();
+    return layout;
+  }
+  var box = h('div', {class: 'rd-text', style: 'font-size:' + o.size + 'px;line-height:2'});
+  eachParagraph(text, function(p, pi){
+    if (pi > 0) { box.appendChild(document.createTextNode('\n\n')); }
+    p.split(/( +)/).forEach(function(tok){
+      if (!tok) return;
+      if (/^ +$/.test(tok)) { box.appendChild(document.createTextNode(tok)); return; }
+      if (unit === 'word') {
+        box.appendChild(h('span', {class: 'tw', text: tok, style: 'letter-spacing:' + sp + 'px;transform:rotate(' + angle + 'deg)' + mir}));
+      } else {
+        var w = h('span', {class: 'rw'});
+        for (var i = 0; i < tok.length; i++) {
+          w.appendChild(h('span', {class: 'rc', text: tok.charAt(i), style: 'margin:0 ' + (sp / 2) + 'px;transform:rotate(' + angle + 'deg)' + mir}));
+        }
+        box.appendChild(w);
+      }
+    });
+  });
+  stage.appendChild(box);
+  return null;
+}
+
+function renderRotate(stage, text, o){
+  var box = h('div', {class: 'rd-text', style: 'font-size:' + o.size + 'px;line-height:1.9'});
+  var period = 360 / o.speed;
+  eachParagraph(text, function(p, pi){
+    if (pi > 0) box.appendChild(document.createTextNode('\n\n'));
+    p.split(/( +)/).forEach(function(tok){
+      if (!tok) return;
+      if (/^ +$/.test(tok)) { box.appendChild(document.createTextNode(tok)); return; }
+      var w = h('span', {class: 'rw'});
+      for (var i = 0; i < tok.length; i++) {
+        var ch = tok.charAt(i);
+        var anim = 'spin ' + period.toFixed(2) + 's linear ' + (-Math.random() * period).toFixed(2) + 's infinite' +
+                   (o.randomDir && Math.random() < 0.5 ? ' reverse' : ' normal');
+        if (o.flicker) {
+          var fp = 0.8 + Math.random() * 1.8;
+          anim += ', flick ' + fp.toFixed(2) + 's ease-in-out ' + (-Math.random() * fp).toFixed(2) + 's infinite';
+        }
+        var st = 'margin:0 ' + (o.spacing / 2) + 'px;animation:' + anim + ';';
+        if (o.colored) st += 'color:hsl(' + rand(0, 359) + ',72%,var(--hue-l));';
+        w.appendChild(h('span', {class: 'rc', text: ch, style: st}));
+      }
+      box.appendChild(w);
+    });
+  });
+  stage.appendChild(box);
+}
+
+function renderTorn(stage, text, o){
+  var canvas = h('canvas', {class: 'torn'});
+  stage.appendChild(canvas);
+  var seeds = [];
+  function seed(li, k){
+    if (!seeds[li]) seeds[li] = [];
+    if (seeds[li][k] == null) seeds[li][k] = Math.random() * 2 - 1;
+    return seeds[li][k];
+  }
+  var edges = {};             /* random zig-zag offsets of each tear, kept between redraws */
+  function edge(li, b, xi){
+    var key = li + ':' + b;
+    if (!edges[key]) edges[key] = [];
+    if (edges[key][xi] == null) edges[key][xi] = Math.random() * 2 - 1;
+    return edges[key][xi];
+  }
+  function draw(){
+    var dpr = window.devicePixelRatio || 1;
+    var W = Math.max(240, stage.clientWidth - 40), pad = 4, maxW = W - pad * 2 - o.jitter * 2;
+    var ctx = canvas.getContext('2d');
+    var font = o.size + 'px ' + FONT;
+    ctx.font = font;
+    var lines = [];
+    eachParagraph(text, function(p, pi){
+      if (pi > 0) lines.push(null);
+      var words = p.split(' '), line = '';
+      words.forEach(function(w){
+        var test = line ? line + ' ' + w : w;
+        if (line && ctx.measureText(test).width > maxW) { lines.push(line); line = w; } else line = test;
+      });
+      if (line) lines.push(line);
+    });
+    var strips = o.breaks + 1, lineH = Math.ceil(o.size * 1.4), stripH = lineH / strips;
+    var blockH = lineH + o.breaks * o.gap, lineGap = Math.round(o.size * 0.45);
+    var H = pad * 2;
+    lines.forEach(function(l){ H += l === null ? lineGap : blockH + lineGap; });
+    canvas.width = Math.ceil(W * dpr); canvas.height = Math.ceil(H * dpr);
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var off = document.createElement('canvas');
+    off.width = Math.ceil(W * dpr); off.height = Math.ceil(lineH * dpr);
+    var oc = off.getContext('2d');
+    var ink = cssVar('--ink'), glow = cssVar('--glow');
+    var step = 7, amp = stripH * 0.22, y = pad, li = 0;
+    /* y of tear b (1..breaks) at horizontal sample xi; b = 0 and b = strips are the straight top and bottom edges */
+    function by(b, xi){ return b === 0 ? -2 : b === strips ? lineH + 2 : b * stripH + edge(li, b, xi) * amp; }
+    lines.forEach(function(l){
+      if (l === null) { y += lineGap; return; }
+      oc.setTransform(1, 0, 0, 1, 0, 0); oc.clearRect(0, 0, off.width, off.height);
+      oc.setTransform(dpr, 0, 0, dpr, 0, 0);
+      oc.font = font; oc.textBaseline = 'middle'; oc.fillStyle = o.glow ? glow : ink;
+      oc.shadowColor = glow; oc.shadowBlur = o.glow ? o.size * 0.35 : 0;
+      oc.fillText(l, pad + o.jitter, lineH / 2 + 1);
+      var nx = Math.ceil(W / step), xi;
+      for (var k = 0; k < strips; k++) {
+        var dx = o.jitter ? Math.round(seed(li, k) * o.jitter) : 0;
+        ctx.save();
+        ctx.translate(dx, y + k * o.gap);
+        ctx.beginPath();
+        for (xi = 0; xi <= nx; xi++) ctx[xi ? 'lineTo' : 'moveTo'](xi * step, by(k, xi));
+        for (xi = nx; xi >= 0; xi--) ctx.lineTo(xi * step, by(k + 1, xi));
+        ctx.closePath(); ctx.clip();
+        ctx.drawImage(off, 0, 0, off.width, off.height, 0, 0, W, lineH);
+        ctx.restore();
+      }
+      y += blockH + lineGap; li++;
+    });
+  }
+  draw();
+  return draw;
+}
+
+function rdSetMode(id){
+  RD.mode = id;
+  $$('#rd-modes .mode-btn').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-mode') === id)); });
+  $$('#tab-reading [data-for]').forEach(function(d){ d.hidden = d.getAttribute('data-for') !== id; });
+  $('#rd-hint').textContent = modeInfo(id).hint;
+}
+
+function rdStart(){
+  var src = RD.picker.get();
+  var stage = $('#rd-stage');
+  if (!src) { $('#rd-hint').textContent = 'Paste a text into the box first.'; return; }
+  var m = RD.mode, size = num('rd-size'), text = src.body, stats = [], r;
+  stage.innerHTML = ''; stage.classList.remove('paused'); RD.redraw = null;
+  $('#rd-original').hidden = true; $('#rd-result').hidden = true;
+
+  if (m === 'missing') {
+    var p = num('rd-miss-p') / 100;
+    r = replaceChars(text, function(ch){ return LETTER.test(ch) && Math.random() < p; }, $('#rd-miss-gap').value);
+    renderPlain(stage, r.text, size);
+    stats.push(['Letters hidden', r.n], ['Probability of hiding', num('rd-miss-p') + '%']);
+  } else if (m === 'vowels') {
+    r = replaceChars(text, function(ch){ return VOWELS.indexOf(ch) >= 0; }, $('#rd-vow-gap').value);
+    renderPlain(stage, r.text, size);
+    stats.push(['Vowels hidden', r.n]);
+  } else if (m === 'nospace') {
+    var t = text, spaces = (text.match(/[  ]/g) || []).length;
+    t = t.replace(/[  ]+/g, '');
+    if (on('rd-ns-punct')) t = t.replace(/[.,;:!?()"«»“”'’—–…\/-]/g, '');
+    if (on('rd-ns-lower')) t = t.toLowerCase();
+    renderPlain(stage, t, size, 'breakall');
+    stats.push(['Spaces removed', spaces], ['Punctuation removed', on('rd-ns-punct') ? 'yes' : 'no']);
+  } else if (m === 'scramble') {
+    r = scramble(text, num('rd-scr-p') / 100, on('rd-scr-ends'));
+    renderPlain(stage, r.text, size);
+    stats.push(['Letter swaps', r.n], ['Swap probability', num('rd-scr-p') + '%'], ['First and last letters kept', on('rd-scr-ends') ? 'yes' : 'no']);
+  } else if (m === 'tilt') {
+    var o = {angle: num('rd-tilt-a'), unit: $('#rd-tilt-unit').value, spacing: num('rd-tilt-sp'), mirror: on('rd-tilt-mirror'), size: size};
+    RD.redraw = renderTilt(stage, text, o);
+    stats.push(['Rotation', o.angle + '° (' + $('#rd-tilt-unit').selectedOptions[0].text + ')'], ['Mirror image', o.mirror ? 'yes' : 'no'], ['Letter spacing', o.spacing + ' px']);
+  } else if (m === 'torn') {
+    var ot = {breaks: num('rd-torn-n'), gap: num('rd-torn-gap'), jitter: num('rd-torn-jit'), glow: on('rd-torn-glow'), size: size};
+    RD.redraw = renderTorn(stage, text, ot);
+    stats.push(['Tears per line', ot.breaks], ['Gap between pieces', ot.gap + ' px'], ['Sideways shift', ot.jitter + ' px'], ['Glowing letters', ot.glow ? 'yes' : 'no']);
+  } else if (m === 'rotate') {
+    var orr = {speed: num('rd-rot-v'), spacing: num('rd-rot-sp'), randomDir: on('rd-rot-dir'), colored: on('rd-rot-col'), flicker: on('rd-rot-flick'), size: size};
+    renderRotate(stage, text, orr);
+    stats.push(['Rotation speed', orr.speed + ' °/s'], ['Letter spacing', orr.spacing + ' px'], ['Coloured letters', orr.colored ? 'yes' : 'no'], ['Flickering letters', orr.flicker ? 'yes' : 'no']);
+  }
+  RD.cur = {src: src, mode: m, size: size, stats: stats, words: countWords(text), chars: countChars(text)};
+  RD.running = true;
+  RD.timer.start();
+  $('#rd-start').textContent = 'Restart';
+  $('#rd-done').disabled = false; $('#rd-stop').disabled = false; $('#rd-orig').disabled = false;
+  $('#rd-orig').textContent = 'Show original';
+  $('#rd-hint').textContent = modeInfo(m).hint;
+}
+
+function rdDone(){
+  if (!RD.running) return;
+  RD.timer.pause(); RD.running = false;
+  $('#rd-stage').classList.add('paused');
+  var c = RD.cur, ms = Math.max(1, RD.timer.elapsed()), wpm = Math.round(c.words / (ms / 60000));
+  var rows = [['Exercise', modeInfo(c.mode).en + ' / ' + modeInfo(c.mode).ru], ['Time', fmtTime(ms)],
+              ['Words in text', c.words], ['Characters in text', c.chars], ['Reading speed', wpm + ' words per minute']]
+             .concat(c.stats).concat([['Font size', c.size + ' px'], ['Text', c.src.title]]);
+  var body = $('#rd-result-body'); body.innerHTML = ''; body.appendChild(resultsTable(rows));
+  $('#rd-result').hidden = false;
+  $('#rd-done').disabled = true; $('#rd-stop').disabled = true;
+  RD.log.push({mode: modeInfo(c.mode).en, title: c.src.title, time: fmtTime(ms), wpm: wpm});
+  var tb = $('#rd-log'); tb.innerHTML = '';
+  RD.log.forEach(function(e, i){
+    tb.appendChild(h('tr', null, [h('td', {text: String(i + 1)}), h('td', {text: e.mode}), h('td', {text: e.title}), h('td', {text: e.time}), h('td', {text: e.wpm + ' wpm'})]));
+  });
+  $('#rd-log-card').hidden = false;
+  $('#rd-result').scrollIntoView({behavior: 'smooth', block: 'nearest'});
+}
+
+function rdStop(){
+  RD.timer.reset(); RD.running = false; RD.redraw = null;
+  $('#rd-stage').innerHTML = '<div class="placeholder">Stopped. Press Start for a new text.</div>';
+  $('#rd-original').hidden = true;
+  $('#rd-start').textContent = 'Start';
+  $('#rd-done').disabled = true; $('#rd-stop').disabled = true; $('#rd-orig').disabled = true;
+}
+
+function rdToggleOriginal(){
+  var box = $('#rd-original');
+  if (!RD.cur) return;
+  box.textContent = RD.cur.src.body;
+  box.style.fontSize = Math.min(RD.cur.size, 20) + 'px';
+  box.hidden = !box.hidden;
+  $('#rd-orig').textContent = box.hidden ? 'Show original' : 'Hide original';
+}
+
+function initReading(){
+  var wrap = $('#rd-modes');
+  MODES.forEach(function(m){
+    wrap.appendChild(h('button', {class: 'mode-btn', 'data-mode': m.id, 'aria-pressed': 'false', onclick: function(){ rdSetMode(m.id); }},
+      [m.en, h('small', {text: m.ru})]));
+  });
+  RD.timer = new Timer($('#rd-clock'));
+  RD.picker = new TextPicker('rd'); pickers.push(RD.picker);
+  rdSetMode('missing');
+  $('#rd-start').addEventListener('click', rdStart);
+  $('#rd-done').addEventListener('click', rdDone);
+  $('#rd-stop').addEventListener('click', rdStop);
+  $('#rd-orig').addEventListener('click', rdToggleOriginal);
+  $('#rd-again').addEventListener('click', function(){ rdStart(); window.scrollTo({top: 0, behavior: 'smooth'}); });
+  var lastW = 0, pending = null;
+  window.addEventListener('resize', function(){
+    clearTimeout(pending);
+    pending = setTimeout(function(){
+      var w = $('#rd-stage').clientWidth;
+      if (RD.redraw && w !== lastW) { lastW = w; RD.redraw(); }
+    }, 120);
+  });
+}
+
+/* =========================================================
+   2. RUNNING LINE
+   ========================================================= */
+var RL = {running: false, paused: false, mode: 'flash', chunks: [], times: [], idx: 0, to: null, raf: null,
+          timer: null, src: null, words: 0, chars: 0, settings: null, tick: null};
+
+function rlChunks(text, n){
+  var words = text.split(/\s+/).filter(Boolean), out = [];
+  for (var i = 0; i < words.length; i += n) out.push(words.slice(i, i + n).join(' '));
+  return out;
+}
+function rlTimes(chunks, wpm, bal, punct){
+  var base = 60000 / wpm, totalWords = 0, totalLetters = 0;
+  chunks.forEach(function(c){ totalWords += c.split(' ').length; totalLetters += c.replace(/\s/g, '').length; });
+  var avg = totalLetters / Math.max(1, totalWords);
+  var t = chunks.map(function(c){
+    var nw = c.split(' ').length, eq = nw * base, prop = base * c.replace(/\s/g, '').length / avg;
+    var x = (1 - bal) * eq + bal * prop;
+    if (punct) {
+      if (/[.!?…;:][»"”)]?$/.test(c)) x *= 1.7;
+      else if (/[,—–][»"”)]?$/.test(c)) x *= 1.3;
+    }
+    return x;
+  });
+  var sum = t.reduce(function(a, b){ return a + b; }, 0), k = totalWords * base / sum;
+  return t.map(function(x){ return Math.max(40, x * k); });
+}
+function rlShow(chunk){
+  var st = RL.settings, stage = $('#rl-stage');
+  var word = $('.rl-word', stage);
+  if (!st.focus) { word.className = 'rl-word centered'; word.textContent = chunk; return; }
+  var i = Math.round(st.fpos * (chunk.length - 1));
+  while (i < chunk.length - 1 && chunk.charAt(i) === ' ') i++;
+  word.className = 'rl-word';
+  word.innerHTML = '';
+  word.appendChild(h('span', {class: 'rl-left', text: chunk.slice(0, i)}));
+  word.appendChild(h('span', {class: 'rl-mid mark', text: chunk.charAt(i)}));
+  word.appendChild(h('span', {class: 'rl-right', text: chunk.slice(i + 1)}));
+}
+function rlStep(){
+  if (RL.idx >= RL.chunks.length) { rlFinish(true); return; }
+  rlShow(RL.chunks[RL.idx]);
+  $('#rl-prog').style.width = ((RL.idx + 1) / RL.chunks.length * 100) + '%';
+  RL.to = setTimeout(function(){ RL.idx++; rlStep(); }, RL.times[RL.idx]);
+}
+function rlTickerFrame(){
+  var t = RL.tick, el = RL.timer.elapsed();
+  var x = t.startX - t.speed * el / 1000;
+  t.line.style.transform = 'translate(' + x + 'px,-50%)';
+  var prog = Math.min(1, (t.startX - x) / t.dist);
+  $('#rl-prog').style.width = (prog * 100) + '%';
+  if (x <= -t.width) { rlFinish(true); return; }
+  RL.raf = requestAnimationFrame(rlTickerFrame);
+}
+function rlStart(){
+  var src = RL.picker.get();
+  if (!src) { $('#rl-stage').innerHTML = '<div class="rl-placeholder">Paste a text into the box first.</div>'; return; }
+  rlFinish(false, true);
+  var st = {mode: $('#rl-mode').value, wpm: num('rl-wpm'), n: num('rl-n'), bal: num('rl-bal') / 100, punct: on('rl-punct'),
+            focus: on('rl-focus'), fpos: num('rl-fpos') / 100, size: num('rl-size')};
+  RL.settings = st; RL.src = src; RL.words = countWords(src.body); RL.chars = countChars(src.body);
+  var stage = $('#rl-stage'); stage.innerHTML = '';
+  $('#rl-result').hidden = true;
+  if (st.mode === 'flash') {
+    if (st.focus) { stage.appendChild(h('div', {class: 'rl-guide t'})); stage.appendChild(h('div', {class: 'rl-guide b'})); }
+    stage.appendChild(h('div', {class: 'rl-word', style: 'font-size:' + st.size + 'px'}));
+    RL.chunks = rlChunks(src.body, st.n);
+    RL.times = rlTimes(RL.chunks, st.wpm, st.bal, st.punct);
+    RL.idx = 0;
+    RL.running = true; RL.paused = false;
+    RL.timer.start();
+    rlStep();
+  } else {
+    var line = h('div', {class: 'ticker', style: 'font-size:' + st.size + 'px'});
+    line.textContent = src.body.replace(/\s+/g, ' ');
+    stage.appendChild(line);
+    var width = line.offsetWidth, vw = stage.clientWidth;
+    var pxPerWord = width / Math.max(1, RL.words);
+    RL.tick = {line: line, width: width, startX: vw, dist: vw + width, speed: st.wpm / 60 * pxPerWord};
+    line.style.transform = 'translate(' + vw + 'px,-50%)';
+    RL.running = true; RL.paused = false;
+    RL.timer.start();
+    RL.raf = requestAnimationFrame(rlTickerFrame);
+  }
+  $('#rl-start').textContent = 'Restart';
+  $('#rl-pause').disabled = false; $('#rl-pause').textContent = 'Pause';
+  $('#rl-stop').disabled = false;
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); /* so Space pauses instead of re-clicking Start */
+}
+function rlPause(){
+  if (!RL.running) return;
+  if (!RL.paused) {
+    RL.paused = true; RL.timer.pause();
+    clearTimeout(RL.to); cancelAnimationFrame(RL.raf);
+    $('#rl-pause').textContent = 'Resume';
+  } else {
+    RL.paused = false; RL.timer.resume();
+    $('#rl-pause').textContent = 'Pause';
+    if (RL.settings.mode === 'flash') rlStep(); else RL.raf = requestAnimationFrame(rlTickerFrame);
+  }
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+}
+function rlFinish(completed, silent){
+  clearTimeout(RL.to); cancelAnimationFrame(RL.raf);
+  if (!RL.running) return;
+  RL.running = false; RL.paused = false; RL.timer.pause();
+  $('#rl-pause').disabled = true; $('#rl-stop').disabled = true; $('#rl-start').textContent = 'Start';
+  if (silent) return;
+  var st = RL.settings, ms = Math.max(1, RL.timer.elapsed());
+  var wordsRead = st.mode === 'flash'
+    ? RL.chunks.slice(0, Math.min(RL.idx + (completed ? 0 : 1), RL.chunks.length)).join(' ').split(' ').filter(Boolean).length
+    : Math.round(RL.words * Math.min(1, (RL.tick.startX - (RL.tick.startX - RL.tick.speed * ms / 1000)) / RL.tick.dist));
+  if (completed) wordsRead = RL.words;
+  $('#rl-stage').innerHTML = '<div class="rl-placeholder">' + (completed ? 'Finished.' : 'Stopped.') + ' Press Start to read again.</div>';
+  var rows = [['Exercise', 'Running line / Бегущая строка'], ['Status', completed ? 'text finished' : 'stopped early'],
+              ['Time', fmtTime(ms)], ['Words in text', RL.words], ['Words shown', wordsRead], ['Characters in text', RL.chars],
+              ['Set speed', st.wpm + ' wpm'], ['Actual pace', Math.round(wordsRead / (ms / 60000)) + ' wpm'],
+              ['Mode', st.mode === 'flash' ? 'flash' : 'ticker']];
+  if (st.mode === 'flash') rows = rows.concat([['Words per chunk', st.n], ['Length-based timing', Math.round(st.bal * 100) + '%'],
+              ['Pause after punctuation', st.punct ? 'yes' : 'no'], ['Focus letter', st.focus ? Math.round(st.fpos * 100) + '% into the chunk' : 'off']]);
+  rows = rows.concat([['Font size', st.size + ' px'], ['Text', RL.src.title]]);
+  var body = $('#rl-result-body'); body.innerHTML = ''; body.appendChild(resultsTable(rows));
+  $('#rl-result').hidden = false;
+}
+function initRunning(){
+  RL.timer = new Timer($('#rl-clock'));
+  RL.picker = new TextPicker('rl'); pickers.push(RL.picker);
+  function modeVis(){ $$('[data-rl]').forEach(function(d){ d.hidden = d.getAttribute('data-rl') !== $('#rl-mode').value; }); }
+  $('#rl-mode').addEventListener('change', modeVis); modeVis();
+  $('#rl-start').addEventListener('click', rlStart);
+  $('#rl-pause').addEventListener('click', rlPause);
+  $('#rl-stop').addEventListener('click', function(){ rlFinish(false); });
+  document.addEventListener('keydown', function(e){
+    if (e.key !== ' ' && e.code !== 'Space') return;
+    if ($('#tab-running').hidden || !RL.running) return;
+    var tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select' || tag === 'button') return;
+    e.preventDefault(); rlPause();
+  });
+}
+
+/* =========================================================
+   3. MAGIC SQUARE
+   ========================================================= */
+function grid(n, v){ var g = []; for (var i = 0; i < n; i++) { g.push([]); for (var j = 0; j < n; j++) g[i].push(v); } return g; }
+function gcd(a, b){ a = Math.abs(a); b = Math.abs(b); while (b) { var t = a % b; a = b; b = t; } return a; }
+function siamese(m){
+  var a = grid(m, -1), i = 0, j = (m - 1) >> 1;
+  for (var k = 0; k < m * m; k++) {
+    a[i][j] = k;
+    var ni = (i - 1 + m) % m, nj = (j + 1) % m;
+    if (a[ni][nj] !== -1) { ni = (i + 1) % m; nj = j; }
+    i = ni; j = nj;
+  }
+  return a;
+}
+function linearOdd(n){
+  function unit(x){ x = ((x % n) + n) % n; return x !== 0 && gcd(x, n) === 1; }
+  for (var t = 0; t < 1000; t++) {
+    var a1 = rand(1, n - 1), b1 = rand(1, n - 1), a2 = rand(1, n - 1), b2 = rand(1, n - 1);
+    if (unit(a1) && unit(b1) && unit(a2) && unit(b2) && unit(a1 + b1) && unit(a1 - b1) && unit(a2 + b2) && unit(a2 - b2) && unit(a1 * b2 - a2 * b1)) {
+      var c1 = rand(0, n - 1), c2 = rand(0, n - 1), g = grid(n, 0);
+      for (var i = 0; i < n; i++) for (var j = 0; j < n; j++)
+        g[i][j] = n * ((a1 * i + b1 * j + c1) % n) + ((a2 * i + b2 * j + c2) % n);
+      return g;
+    }
+  }
+  return siamese(n);
+}
+function doublyEven(n){
+  var g = grid(n, 0);
+  for (var i = 0; i < n; i++) for (var j = 0; j < n; j++) {
+    var v = i * n + j;
+    g[i][j] = ((i % 4) === (j % 4) || (i % 4) + (j % 4) === 3) ? n * n - 1 - v : v;
+  }
+  return g;
+}
+function strachey(n){            /* singly even orders (6, 10, …) */
+  var m = n / 2, A = siamese(m), g = grid(n, 0), i, j, t, k = (n - 2) / 4, mid = (m - 1) / 2;
+  for (i = 0; i < m; i++) for (j = 0; j < m; j++) {
+    g[i][j] = A[i][j];                 /* top-left     */
+    g[i + m][j + m] = A[i][j] + m * m;   /* bottom-right */
+    g[i][j + m] = A[i][j] + 2 * m * m;   /* top-right    */
+    g[i + m][j] = A[i][j] + 3 * m * m;   /* bottom-left  */
+  }
+  function sw(r, c){ t = g[r][c]; g[r][c] = g[r + m][c]; g[r + m][c] = t; }
+  for (i = 0; i < m; i++) {
+    for (j = 0; j < k; j++) sw(i, j);
+    for (j = n - k + 1; j < n; j++) sw(i, j);
+  }
+  sw(mid, 0); sw(mid, mid);
+  return g;
+}
+function baseSquare(n){
+  if (n === 3) return siamese(3);
+  if (n === 5) return Math.random() < 0.5 ? siamese(5) : linearOdd(5);
+  if (n % 4 === 0) return doublyEven(n);
+  if (n % 2 === 1) return siamese(n);
+  return strachey(n);
+}
+function rot90(g){ var n = g.length, r = grid(n, 0); for (var i = 0; i < n; i++) for (var j = 0; j < n; j++) r[j][n - 1 - i] = g[i][j]; return r; }
+function symPerm(n){
+  var half = Math.floor(n / 2), src = shuffle(range(half)), p = new Array(n);
+  for (var k = 0; k < half; k++) {
+    var flip = Math.random() < 0.5;
+    p[k] = flip ? n - 1 - src[k] : src[k];
+    p[n - 1 - k] = n - 1 - p[k];
+  }
+  if (n % 2) p[half] = half;
+  return p;
+}
+function permute(g, rp, cp){ var n = g.length, r = grid(n, 0); for (var i = 0; i < n; i++) for (var j = 0; j < n; j++) r[i][j] = g[rp[i]][cp[j]]; return r; }
+function linesOf(n, semi){
+  var L = [], i, j, row, col, d1 = [], d2 = [];
+  for (i = 0; i < n; i++) { row = []; col = []; for (j = 0; j < n; j++) { row.push(i * n + j); col.push(j * n + i); } L.push(row); L.push(col); }
+  if (!semi) { for (i = 0; i < n; i++) { d1.push(i * n + i); d2.push(i * n + (n - 1 - i)); } L.push(d1); L.push(d2); }
+  return L;
+}
+function isMagic(flat, n, semi){
+  var L = linesOf(n, semi), S = null, ok = true, seen = {};
+  L.forEach(function(l){ var s = l.reduce(function(a, i){ return a + flat[i]; }, 0); if (S === null) S = s; else if (s !== S) ok = false; });
+  flat.forEach(function(v){ if (seen[v]) ok = false; seen[v] = true; });
+  return ok;
+}
+function valueMap(n, digits, mixed){
+  var N = n * n;
+  if (!digits) return {a: 1, c: 1};
+  var hi = Math.pow(10, digits) - 1, floor = Math.pow(10, digits - 1), lo = mixed ? 1 : floor;
+  for (var t = 0; t < 300; t++) {
+    var aMax = Math.floor((hi - lo) / (N - 1)); if (aMax < 1) break;
+    var a = rand(1, aMax), cHi = hi - a * (N - 1);
+    if (mixed) cHi = Math.min(cHi, floor - 1);
+    if (cHi < lo) continue;
+    var c = rand(lo, cHi);
+    if (mixed && a * (N - 1) + c < floor) continue;
+    return {a: a, c: c};
+  }
+  return {a: 1, c: lo};
+}
+function propSolvable(blank, lines, sKnown){
+  var known = blank.map(function(b){ return !b; }), sk = sKnown, changed = true;
+  while (changed) {
+    changed = false;
+    if (!sk) lines.forEach(function(l){ if (l.every(function(i){ return known[i]; })) sk = true; });
+    if (sk) lines.forEach(function(l){
+      var u = l.filter(function(i){ return !known[i]; });
+      if (u.length === 1) { known[u[0]] = true; changed = true; }
+    });
+  }
+  return known.every(Boolean);
+}
+function matRank(M){
+  var A = M.map(function(r){ return r.slice(); }), rows = A.length, cols = rows ? A[0].length : 0, rk = 0;
+  for (var c = 0; c < cols && rk < rows; c++) {
+    var piv = -1, best = 1e-9;
+    for (var r = rk; r < rows; r++) if (Math.abs(A[r][c]) > best) { best = Math.abs(A[r][c]); piv = r; }
+    if (piv < 0) continue;
+    var tmp = A[rk]; A[rk] = A[piv]; A[piv] = tmp;
+    for (r = 0; r < rows; r++) if (r !== rk) {
+      var f = A[r][c] / A[rk][c];
+      if (f) for (var k = c; k < cols; k++) A[r][k] -= f * A[rk][k];
+    }
+    rk++;
+  }
+  return rk;
+}
+function rankUnique(blank, lines, sKnown){
+  var unk = []; blank.forEach(function(b, i){ if (b) unk.push(i); });
+  var cols = unk.length + (sKnown ? 0 : 1);
+  if (!cols) return true;
+  var M = lines.map(function(l){
+    var row = []; for (var x = 0; x < cols; x++) row.push(0);
+    l.forEach(function(i){ var k = unk.indexOf(i); if (k >= 0) row[k] = 1; });
+    if (!sKnown) row[cols - 1] = -1;
+    return row;
+  });
+  return matRank(M) === cols;
+}
+function makePuzzle(o){
+  var n = o.n, g;
+  for (var attempt = 0; attempt < 20; attempt++) {
+    g = baseSquare(n);
+    var r = rand(0, 3); while (r--) g = rot90(g);
+    if (Math.random() < 0.5) g = g.map(function(row){ return row.slice().reverse(); });
+    var p = symPerm(n); g = permute(g, p, p);
+    if (o.semi) g = permute(g, shuffle(range(n)), shuffle(range(n)));
+    var flat0 = [].concat.apply([], g);
+    if (isMagic(flat0, n, o.semi)) break;
+  }
+  var vm = valueMap(n, o.digits, o.mixed);
+  var flat = [].concat.apply([], g).map(function(v){ return vm.a * v + vm.c; });
+  var lines = linesOf(n, o.semi);
+  var S = lines[0].reduce(function(a, i){ return a + flat[i]; }, 0);
+  /* a line-sum puzzle can have at most (number of independent lines) blanks: 2n+1, or 2n-1 if semi-magic */
+  var N = n * n, maxBlank = o.semi ? 2 * n - 1 : 2 * n + 1;
+  var target = o.diff === 'easy' ? Math.max(2, Math.round(maxBlank * 0.5)) : N;
+  var test = o.diff === 'hard' ? rankUnique : propSolvable;
+  var blank = []; for (var i = 0; i < N; i++) blank.push(false);
+  var count = 0;
+  shuffle(range(N)).forEach(function(idx){
+    if (count >= target) return;
+    blank[idx] = true;
+    if (test(blank, lines, o.showS)) count++; else blank[idx] = false;
+  });
+  return {n: n, flat: flat, blank: blank, lines: lines, S: S, semi: o.semi, maxLen: String(Math.max.apply(null, flat)).length};
+}
+
+var MS = {running: false, o: null, P: null, timer: null, solved: 0, total: 0, skipped: 0, wrong: 0, active: null, locked: false};
+
+function msInputs(){ return $$('#ms-board input.cell'); }
+function msValues(){
+  var P = MS.P, v = P.flat.map(function(x, i){ return P.blank[i] ? null : x; });
+  msInputs().forEach(function(inp){ var i = Number(inp.getAttribute('data-idx')); v[i] = inp.value === '' ? null : Number(inp.value); });
+  return v;
+}
+function msUpdateSums(){
+  var P = MS.P, v = msValues(), show = MS.o.showLines;
+  P.lines.forEach(function(l, k){
+    var el = document.getElementById('ms-sum-' + k); if (!el) return;
+    var full = l.every(function(i){ return v[i] !== null; });
+    var s = l.reduce(function(a, i){ return a + (v[i] || 0); }, 0);
+    el.className = el.className.replace(/\s?(ok|bad)/g, '');
+    if (!show) { el.textContent = ''; return; }
+    if (full) { el.textContent = (k >= 2 * P.n ? (k === 2 * P.n ? '↘ ' : '↙ ') : '') + s; el.className += s === P.S ? ' ok' : ' bad'; }
+    else el.textContent = k >= 2 * P.n ? (k === 2 * P.n ? '↘ …' : '↙ …') : '…';
+  });
+}
+function msMsg(text, cls){ var m = $('#ms-msg'); m.textContent = text; m.className = 'msg' + (cls ? ' ' + cls : ''); }
+function msNew(){
+  MS.P = makePuzzle(MS.o); MS.total++; MS.locked = false;
+  var P = MS.P, n = P.n, area = $('#ms-area'); area.innerHTML = '';
+  var cell = Math.max(40, Math.min(68, Math.floor(380 / n)));
+  var fsk = P.maxLen >= 3 ? 0.34 : 0.44;
+  var wrap = h('div', {class: 'ms-wrap', style: '--cell:min(' + cell + 'px, calc((100vw - 120px) / ' + (n + 1) + '));--cfs:calc(var(--cell) * ' + fsk + ');--sumw:' + (P.maxLen >= 3 ? 44 : 36) + 'px'});
+  var meta = h('div', {class: 'ms-meta'});
+  meta.appendChild(h('span', null, ['Magic sum: ', h('b', {text: MS.o.showS ? String(P.S) : '?'})]));
+  meta.appendChild(h('span', null, ['Lines to check: ', h('b', {text: P.semi ? 'rows and columns' : 'rows, columns, diagonals'})]));
+  wrap.appendChild(meta);
+  var board = h('div', {class: 'ms-board', id: 'ms-board', style: 'grid-template-columns:repeat(' + n + ', var(--cell)) var(--sumw)'});
+  for (var i = 0; i < n; i++) {
+    for (var j = 0; j < n; j++) {
+      var idx = i * n + j;
+      if (P.blank[idx]) {
+        board.appendChild(h('input', {class: 'cell', 'data-idx': String(idx), inputmode: 'numeric', autocomplete: 'off', maxlength: String(P.maxLen), 'aria-label': 'Row ' + (i + 1) + ', column ' + (j + 1)}));
+      } else board.appendChild(h('div', {class: 'cell given', text: String(P.flat[idx])}));
+    }
+    board.appendChild(h('div', {class: 'sum', id: 'ms-sum-' + (2 * i)}));
+  }
+  for (j = 0; j < n; j++) board.appendChild(h('div', {class: 'sum col', id: 'ms-sum-' + (2 * j + 1)}));
+  board.appendChild(h('div', {class: 'sum col'}));
+  wrap.appendChild(board);
+  if (!P.semi) {
+    var dg = h('div', {class: 'ms-meta'});
+    dg.appendChild(h('span', {class: 'sum', id: 'ms-sum-' + (2 * n), style: 'width:auto;height:auto'}));
+    dg.appendChild(h('span', {class: 'sum', id: 'ms-sum-' + (2 * n + 1), style: 'width:auto;height:auto'}));
+    wrap.appendChild(dg);
+  }
+  var pad = h('div', {class: 'keypad'});
+  ['1','2','3','4','5','6','7','8','9','0','⌫','C'].forEach(function(k){
+    pad.appendChild(h('button', {text: k, title: k === '⌫' ? 'Delete last digit' : k === 'C' ? 'Clear cell' : 'Type ' + k,
+      onmousedown: function(e){ e.preventDefault(); }, onclick: function(){ msKey(k); }}));
+  });
+  wrap.appendChild(pad);
+  wrap.appendChild(h('div', {class: 'msg', id: 'ms-msg'}));
+  var tb = h('div', {class: 'toolbar', style: 'justify-content:center'});
+  tb.appendChild(h('button', {class: 'btn', id: 'ms-check', text: 'Check square', onclick: msCheck}));
+  tb.appendChild(h('button', {class: 'btn ghost', id: 'ms-clear', text: 'Clear entries', onclick: msClear}));
+  tb.appendChild(h('button', {class: 'btn ghost', id: 'ms-reveal', text: 'Show solution', onclick: msReveal}));
+  tb.appendChild(h('button', {class: 'btn ghost', id: 'ms-next', text: 'New square', onclick: function(){ if (!MS.locked) MS.skipped++; msNew(); }}));
+  tb.appendChild(h('button', {class: 'btn ghost', text: 'Stop', onclick: function(){ msFinish(false); }}));
+  wrap.appendChild(tb);
+  area.appendChild(wrap);
+  msInputs().forEach(function(inp){
+    inp.addEventListener('focus', function(){ MS.active = inp; });
+    inp.addEventListener('input', function(){ inp.value = inp.value.replace(/\D/g, '').slice(0, P.maxLen); msUpdateSums(); });
+    inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); if (MS.locked) $('#ms-next').click(); else msCheck(); } });
+  });
+  msUpdateSums();
+  msProgress();
+  var first = msInputs()[0]; if (first) { MS.active = first; first.focus({preventScroll: true}); }
+}
+function msKey(k){
+  var inp = MS.active; if (!inp || inp.disabled) return;
+  if (k === '⌫') inp.value = inp.value.slice(0, -1);
+  else if (k === 'C') inp.value = '';
+  else if (inp.value.length < MS.P.maxLen) inp.value += k;
+  msUpdateSums(); inp.focus({preventScroll: true});
+}
+function msClear(){ if (MS.locked) return; msInputs().forEach(function(i){ i.value = ''; }); msUpdateSums(); msMsg(''); var f = msInputs()[0]; if (f) f.focus(); }
+function msLock(){ MS.locked = true; msInputs().forEach(function(i){ i.disabled = true; }); $('#ms-check').disabled = true; $('#ms-clear').disabled = true; $('#ms-reveal').disabled = true; $('#ms-next').textContent = 'Next square'; $('#ms-next').focus(); }
+function msCheck(){
+  if (MS.locked) return;
+  var P = MS.P, v = msValues();
+  if (v.some(function(x){ return x === null; })) { msMsg('Fill in all empty cells first.', 'bad'); return; }
+  var bad = P.lines.filter(function(l){ return l.reduce(function(a, i){ return a + v[i]; }, 0) !== P.S; }).length;
+  var keepShow = MS.o.showLines; MS.o.showLines = true; msUpdateSums(); MS.o.showLines = keepShow;
+  if (!bad) {
+    MS.solved++; msProgress(); msLock();
+    if (MS.solved >= MS.o.req) { msMsg('Well done! All squares solved.', 'ok'); setTimeout(function(){ msFinish(true); }, 900); }
+    else msMsg('Well done! Press Enter or “Next square”.', 'ok');
+  } else {
+    MS.wrong++;
+    msMsg('Not quite: ' + bad + (bad === 1 ? ' line does' : ' lines do') + ' not add up to the magic sum.', 'bad');
+  }
+}
+function msReveal(){
+  if (MS.locked) return;
+  msInputs().forEach(function(inp){ inp.value = String(MS.P.flat[Number(inp.getAttribute('data-idx'))]); inp.classList.add('revealed'); });
+  MS.skipped++; msUpdateSums(); msLock();
+  msMsg('Solution shown. This square does not count as solved.', '');
+}
+function msProgress(){ $('#ms-progress').textContent = 'Solved: ' + MS.solved + ' / ' + (MS.o ? MS.o.req : num('ms-req')); }
+function msStart(){
+  var d = Number($('#ms-dig').value);
+  MS.o = {n: num('ms-n'), digits: d, mixed: d > 0 && on('ms-mixed'), semi: on('ms-semi'), diff: $('#ms-diff').value,
+          showS: on('ms-showS'), showLines: on('ms-showLines'), req: num('ms-req')};
+  MS.solved = 0; MS.total = 0; MS.skipped = 0; MS.wrong = 0; MS.running = true;
+  $('#ms-result').hidden = true;
+  MS.timer.start();
+  msNew();
+}
+function msFinish(complete){
+  if (!MS.running) return;
+  MS.running = false; MS.timer.pause();
+  var o = MS.o, ms = MS.timer.elapsed();
+  var range = o.digits ? (o.digits === 2 ? 'two-digit' : 'three-digit') : 'classic 1…' + (o.n * o.n);
+  var rows = [['Exercise', 'Magic square / Магический квадрат'], ['Status', complete ? 'target reached' : 'stopped'], ['Time', fmtTime(ms)],
+              ['Square size', o.n + ' × ' + o.n], ['Numbers', range], ['Mixed digit count', o.mixed ? 'yes' : 'no'],
+              ['Semi-magic (no diagonals)', o.semi ? 'yes' : 'no'], ['Empty cells', $('#ms-diff').selectedOptions[0].text],
+              ['Squares required', o.req], ['Squares shown', MS.total], ['Solved', MS.solved], ['Skipped or revealed', MS.skipped],
+              ['Wrong checks', MS.wrong], ['Average time per solved square', MS.solved ? fmtTime(ms / MS.solved) : '—']];
+  var body = $('#ms-result-body'); body.innerHTML = ''; body.appendChild(resultsTable(rows));
+  $('#ms-result').hidden = false;
+  $('#ms-area').innerHTML = '<div class="placeholder" style="color:var(--muted);text-align:center;padding:60px 10px">Session over. Press Start or “Train again”.</div>';
+  $('#ms-result').scrollIntoView({behavior: 'smooth', block: 'nearest'});
+}
+function initMagic(){
+  MS.timer = new Timer($('#ms-clock'));
+  $('#ms-start').addEventListener('click', msStart);
+  $('#ms-again').addEventListener('click', msStart);
+  $('#ms-dig').addEventListener('change', function(){ var d = $('#ms-dig').value !== '0'; $('#ms-mixed').disabled = !d; if (!d) $('#ms-mixed').checked = false; });
+  $('#ms-req').addEventListener('input', function(){ if (!MS.running) msProgress(); });
+  msProgress();
+}
+
+/* =========================================================
+   Shell: tabs, language, theme
+   ========================================================= */
+function showTab(name){
+  $$('.tabs button').forEach(function(b){ b.setAttribute('aria-selected', String(b.getAttribute('data-tab') === name)); });
+  ['reading', 'running', 'magic', 'about'].forEach(function(t){ document.getElementById('tab-' + t).hidden = t !== name; });
+  if (name !== 'running' && RL.running && !RL.paused) rlPause();
+  if (name === 'reading' && RD.redraw) RD.redraw();
+}
+function setLang(l){
+  lang = l;
+  $$('[data-lang]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === l)); });
+  pickers.forEach(function(p){ p.refresh(); });
+}
+function initShell(){
+  $$('.tabs button').forEach(function(b){ b.addEventListener('click', function(){ showTab(b.getAttribute('data-tab')); }); });
+  $$('[data-lang]').forEach(function(b){ b.addEventListener('click', function(){ setLang(b.getAttribute('data-lang')); }); });
+  $('#theme-btn').addEventListener('click', function(){
+    var root = document.documentElement;
+    var dark = root.getAttribute('data-theme') ? root.getAttribute('data-theme') === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    root.setAttribute('data-theme', dark ? 'light' : 'dark');
+    if (RD.redraw) RD.redraw();
+  });
+}
+
+bindRanges();
+initShell();
+initReading();
+initRunning();
+initMagic();
+
+/* exposed for self-tests only */
+window.__drill = {makePuzzle: makePuzzle, isMagic: isMagic, baseSquare: baseSquare, linesOf: linesOf, scramble: scramble, rlTimes: rlTimes, rlChunks: rlChunks};
+})();
+</script>
+</body>
+</html>
